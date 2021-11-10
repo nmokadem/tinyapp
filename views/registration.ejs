@@ -22,11 +22,11 @@
         <form class="form-inline" action="/registration" method="POST">
 
           <label for="userId"> username:</label>
-          <input class="form-control" type="text" name="userId" value='<%= userId %>' placeholder="username" style="width: 300px; margin: 1em">
+          <input class="form-control" required readonly="readonly" type="text" name="userId" value='<%= userId %>' placeholder="username" style="width: 300px; margin: 1em">
           <label for="email"> Email:</label>
-          <input class="form-control" type="email" name="email" value='<%= email %>' placeholder="email address" style="width: 300px; margin: 1em">
+          <input class="form-control" required type="email" name="email" value='<%= email %>' placeholder="email address" style="width: 300px; margin: 1em">
           <label for="password"> Password:</label>
-          <input class="form-control" type="password" name="password" value='<%= password %>' placeholder="password" style="width: 300px; margin: 1em">
+          <input class="form-control" required type="password" name="password" value='<%= password %>' placeholder="password" style="width: 300px; margin: 1em">
 
           <button type="submit" class="btn btn-primary">Submit</button>&nbsp;
           <a href="/urls" class="btn btn-secondary">Cancel</a>
