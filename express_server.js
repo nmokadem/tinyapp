@@ -34,8 +34,8 @@ const users =
 let alert = "";
 const alerts =
 {
-  alert1 : "Username or email not found",
-  alert2 : "Profile cannot be added. Dubplicate email",
+  alert1 : "Email or passwrord not found. Please Try Again!",
+  alert2 : "Profile cannot be added. Dubplicate emails",
   alert3 : "URL entered already exists!",
   alert4 : "URL cannot be empty!"
 }
@@ -66,7 +66,7 @@ const sendUserIdCookie = (res,user_Id, userId) => {
   if (userId) {
     res.cookie(user_Id, userId,
     {
-      maxAge: 2 * 60 * 1000,  //24 * 60 * 60 * 1000, 
+      maxAge: 5 * 60 * 1000,  //24 * 60 * 60 * 1000, 
       httpOnly: true,
     });
   }
@@ -127,12 +127,11 @@ app.post("/registration", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
   const id = userId;
-
   if (userId && email && password) {
 
     let keys = Object.keys(users);
     for (let key of keys) {
-      if (users[key].email === email && users[key].id !== userId) {
+      if (users[key].email === email && users[key].id !== user_id) {
         alert = "alert2";
         break;
       }
@@ -152,13 +151,14 @@ app.post("/registration", (req, res) => {
 
       if (userId === user_id) {          // update details
         users[userId] = thisObj;
+        sendUserIdCookie(res,'userId', email);
       }
 
       if (userId !== user_id) {
         delete users[user_id];           //delete old
         users[userId] = thisObj;         //update user
 
-        res.clearCookie('user_id');      //delete old cookie
+        res.clearCookie('userId');      //delete old cookie
         sendUserIdCookie(res,'userId', userId);  //add new cookie
       }
     }
@@ -205,17 +205,32 @@ app.post("/logout", (req, res) => {
   res.redirect("/urls");
 });
 
+app.get("/login", (req, res) => {
+  userId = '';
+  email = '';
+  alert = '';
+
+  const templateVars = { 
+    userId,
+    email,
+    alert, 
+  };
+
+  res.render("login", templateVars);
+});
+
 app.post("/login", (req, res) => {
   alert = "";
   let user = {};
 
-  userId = req.body.userId;
+  let email = req.body.email;
+  let password = req.body.password;
 
-  if (userId) {
+  if (email && password) {
     let keys = Object.keys(users);
     for (let key of keys) {
-      if (users[key].id === userId || users[key].email === userId) {
-        sendUserIdCookie(res,'userId', userId);
+      if (users[key].email === email && users[key].password === password) {
+        sendUserIdCookie(res,'userId', email);
         user = users[key];
         break;
       } 
@@ -226,7 +241,7 @@ app.post("/login", (req, res) => {
     }
   }
   if (alert) {
-    res.status(400).send("User id or email not found!");
+    res.status(400).send(alerts[alert]);
   } else {
     res.redirect("/urls");
   }
