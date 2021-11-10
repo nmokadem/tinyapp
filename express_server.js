@@ -132,7 +132,7 @@ app.post("/registration", (req, res) => {
 
     let keys = Object.keys(users);
     for (let key of keys) {
-      if (users[key].email === email && users[key.id !== userId]) {
+      if (users[key].email === email && users[key].id !== userId) {
         alert = "alert2";
         break;
       }
@@ -163,7 +163,12 @@ app.post("/registration", (req, res) => {
       }
     }
   }
-  res.redirect("/urls");
+
+  if (alert) {
+    res.status(400).send("Email already registered!");
+  } else {
+    res.redirect("/urls");
+  }
 });
 
 app.get("/urls", (req, res) => {
@@ -180,7 +185,7 @@ app.get("/urls", (req, res) => {
     urls: urlDatabase
   };
   alert = "";
-  console.log(templateVars);
+//  console.log(templateVars);
 
 // console.log('=======================================');
 // console.log('userId =====>',userId);
@@ -220,8 +225,11 @@ app.post("/login", (req, res) => {
       alert = "alert1";
     }
   }
-//  console.log(user);
-  res.redirect("/urls");
+  if (alert) {
+    res.status(400).send("User id or email not found!");
+  } else {
+    res.redirect("/urls");
+  }
 });
 
 //router used to add or modify urls
