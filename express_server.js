@@ -3,13 +3,8 @@ const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
 
 const app = express();
-<<<<<<< HEAD
-const PORT = 8080; // default port 8080
-const HOST = 'localhost';
-=======
 
 const PORT = 8080;                                       // default port 8080
->>>>>>> feature/cookies
 
 app.set("view engine", "ejs");
 
@@ -66,6 +61,20 @@ app.get("/", (req, res) => {
   res.redirect("/urls");
 });
 
+app.get("/registration", (req, res) => {
+  let email = '';
+  let password = '';
+  userId = getUserIdCookie(req);
+
+  const templateVars = { 
+    userId,
+    email,
+    password
+  };
+  res.render("registration", templateVars);
+});
+
+
 app.get("/urls", (req, res) => {
   userId = getUserIdCookie(req);
 
@@ -116,21 +125,11 @@ app.get("/urls/new", (req, res) => {
 
 // Router to edit a record from the database
 app.get("/urls/:shortURL", (req, res) => {
-<<<<<<< HEAD
-  const templateVars = 
-    { 
-      shortURL: req.params.shortURL, 
-      longURL: urlDatabase[req.params.shortURL],
-      host : HOST,
-      port : PORT 
-    };
-=======
   const templateVars = {
     userId, 
     shortURL: req.params.shortURL, 
     longURL: urlDatabase[req.params.shortURL] 
   };
->>>>>>> feature/cookies
   res.render("urls_show", templateVars);
   // let longURL = urlDatabase[req.params.shortURL];
   // res.redirect(longURL);
@@ -143,37 +142,6 @@ app.post("/urls/:shortURL/delete", (req, res) => {
   res.redirect("/urls");
 });
 
-<<<<<<< HEAD
-// Router to update a record from the database
-app.post("/urls/:shortURL", (req, res) => {
-  const shortURL = req.params.shortURL;
-  const longURL = req.body.longURL;
-  //console.log('...............',shortURL,longURL);
-  //console.log(req.body.longURL);
-  urlDatabase[shortURL] = longURL;
-  res.redirect("/urls");
-});
-
-// app.get("/urls.json", (req, res) => {
-//   res.json(urlDatabase);
-// });
-
-// app.get("/set", (req, res) => {
-//   const a = 1;
-//   res.send(`a = ${a}`);
-//  });
- 
-//  app.get("/fetch", (req, res) => {
-//   res.send(`a = ${a}`);
-//  });
-
-// app.get("/hello", (req, res) => {
-//   const templateVars = { greeting: 'Hello World!' };
-//   res.render("hello_world", templateVars);
-// });
-
-=======
->>>>>>> feature/cookies
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
