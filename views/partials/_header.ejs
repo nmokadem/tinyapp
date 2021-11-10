@@ -9,6 +9,28 @@
         <a class="nav-item nav-link" href="/urls">My URLs</a>
         <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
       </div>
+
+
+      <div class="collapse navbar-collapse form-group mb-2 justify-content-end">
+          <% if (!userId) { %>
+            <form class="form-inline" action="/login" method="POST">
+              <label for="userId">user name:</label>
+              <input class="form-control" type="text" name="userId" value="" placeholder="username" style="width: 300px; margin: 1em">
+              <button type="submit" class="btn btn-outline-dark">Login</button>
+            </form>
+          <% } %>
+
+          <% if (userId) { %>
+            <form class="form-inline" action="/logout" method="POST">
+              <input class="form-control" type="hidden" name="userId" value="<%= userId %>">
+              Logged in as <%= userId %>&nbsp;&nbsp;
+              <button type="submit" class="btn btn-outline-dark">Log Out</button>
+            </form>
+          <% } %>
+    </div>
+
+
+
     </div>
   </nav>
 </header>
