@@ -10,9 +10,20 @@ const PORT = 8080;                                       // default port 8080
 app.set("view engine", "ejs");
 
 
+// const urlDatabase = {
+//   "b2xVn2": "http://www.lighthouselabs.ca",
+//   "9sm5xK": "http://www.google.com"
+// };
+
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+  b6UTxQ: {
+      longURL: "https://www.tsn.ca",
+      userID: "aJ48lW"
+  },
+  i3BoGr: {
+      longURL: "https://www.google.ca",
+      userID: "aJ48lW"
+  }
 };
 
 let userId = "";
@@ -173,6 +184,7 @@ app.post("/registration", (req, res) => {
 app.get("/urls", (req, res) => {
   let email = '';
   let user = getCookie(req);
+
   if (user['email']) {
     email = user['email']
   }
@@ -197,14 +209,14 @@ app.post("/logout", (req, res) => {
 app.get("/login", (req, res) => {
   userId = '';
   email = '';
-  alert = '';
+ // alert = '';
 
   const templateVars = { 
     userId,
     email,
     alert, 
   };
-
+  alert = '';
   res.render("login", templateVars);
 });
 
@@ -243,7 +255,7 @@ app.post("/urls", (req, res) => {
   let long_url = req.body.longURL;
 
   if (long_url) {   //URL not empty or else do nothing
-  
+
     if (!short_url) {  //Add a new URL
       short_url = generateRandomString(6);
     }
@@ -253,14 +265,19 @@ app.post("/urls", (req, res) => {
         long_url = 'http://' + long_url;
       }
     }
+
     for (let url in urlDatabase) {
       if (urlDatabase[url] === long_url && url !== short_url){
         alert = "alert3";
         break;
       }
     }
+
     if (alert === "") {
-      urlDatabase[short_url] = long_url;
+      let thisObj = {};
+      thisObj.longURL = long_url;
+      thisObj.userId = userId;
+      urlDatabase[short_url] = thisObj;
     }
   } else {
     alert = "alert4";
@@ -273,9 +290,14 @@ app.post("/urls", (req, res) => {
 app.get("/urls/new", (req, res) => {
   let email = '';
   let user = getCookie(req);
-  if (user['email']) {
-    email = user['email'];
+
+  if (!user['email']) {
+    alert = "Action Denied! Please login first then try again!"
+    res.redirect("/login");
+    return;
   }
+
+  email = user['email'];
 
   const templateVars = { 
     userId,
@@ -289,9 +311,14 @@ app.get("/urls/new", (req, res) => {
 app.get("/urls/:shortURL", (req, res) => {
   let email = '';
   let user = getCookie(req);
-  if (user['email']) {
-    email = user['email']
+
+  if (!user['email']) {
+    alert = "Action Denied! Please login first then try again!"
+    res.redirect("/login");
+    return;
   }
+
+  email = user['email'];
 
   const templateVars = {
     userId,
@@ -305,7 +332,17 @@ app.get("/urls/:shortURL", (req, res) => {
 
 // Router to delete a record from the database
 app.post("/urls/:shortURL/delete", (req, res) => {
+
+  let user = getCookie(req);
+
+  if (!user['email']) {
+    alert = "Action Denied! Please login first then try again!"
+    res.redirect("/login");
+    return;
+  }
+
   const shortURL = req.params.shortURL;
+
   delete urlDatabase[shortURL];
   res.redirect("/urls");
 });
