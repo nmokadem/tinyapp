@@ -97,6 +97,16 @@ const getCookie = (req) => {
   return {};
 };
 
+const urlsForUser = function(id) {
+  thisObj = {};
+  for (let shortURL in urlDatabase) {
+    if (id === urlDatabase[shortURL].userID) {
+      thisObj[shortURL] = urlDatabase[shortURL];
+    }
+  }
+  return thisObj;
+}
+
 
 //*******************************************************************
 // routers
@@ -189,11 +199,19 @@ app.get("/urls", (req, res) => {
     email = user['email']
   }
 
+  urls = urlsForUser(userId);
+  if (Object.keys(urls).length === 0) {
+    alert = "You have no URLs!"
+    if (!email) {
+      alert += " Please login first!";
+    }
+  }
+  
   const templateVars = { 
     userId,
     email,
     alert, 
-    urls: urlDatabase
+    urls
   };
   alert = "";
 
