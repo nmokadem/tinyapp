@@ -2,6 +2,7 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
 const morgan = require('morgan');
+const bcrypt = require('bcryptjs');
 
 const app = express();
 
@@ -17,29 +18,29 @@ app.set("view engine", "ejs");
 
 const urlDatabase = {
   b6UTxQ: {
-      longURL: "https://www.tsn.ca",
-      userID: "aJ48lW"
+    longURL: "https://www.tsn.ca",
+    userID: "aJ48lW"
   },
   i3BoGr: {
-      longURL: "https://www.google.ca",
-      userID: "aJ48lW"
+    longURL: "https://www.google.ca",
+    userID: "aJ48lW"
   }
 };
 
 let userId = "";
-const users = 
-{ 
+const users =
+{
   "userRandomID": {
-    id: "userRandomID", 
-    email: "user@example.com", 
+    id: "userRandomID",
+    email: "user@example.com",
     password: "purple-monkey-dinosaur"
   },
- "user2RandomID": {
-    id: "user2RandomID", 
-    email: "user2@example.com", 
+  "user2RandomID": {
+    id: "user2RandomID",
+    email: "user2@example.com",
     password: "dishwasher-funk"
   }
-}
+};
 
 let alert = "";
 const alerts =
@@ -48,7 +49,7 @@ const alerts =
   "alert2" : "Profile cannot be added. Dubplicate emails",
   "alert3" : "URL entered already exists!",
   "alert4" : "URL cannot be empty!"
-}
+};
 
 //*******************************************************************
 // middlewares
@@ -63,22 +64,22 @@ app.use(morgan('combined'));
 //*******************************************************************
 // Functions to be separated in a different module
 //*******************************************************************
-function generateRandomString(num) {
+const generateRandomString = function(num) {
   let characters = "abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
   let str = "";
-  for (let i = 0; i < num; i++){
+  for (let i = 0; i < num; i++) {
     str += characters[Math.floor(Math.random() * characters.length)];
   }
-  return str; 
+  return str;
 };
 
 const sendCookie = (res, key, val) => {
   if (val) {
     res.cookie(key, val,
-    {
-      maxAge: 5 * 60 * 1000,  //24 * 60 * 60 * 1000, 
-      httpOnly: true,
-    });
+      {
+        maxAge: 5 * 60 * 1000,  //24 * 60 * 60 * 1000,
+        httpOnly: true,
+      });
   }
 };
 
@@ -98,16 +99,29 @@ const getCookie = (req) => {
 };
 
 const urlsForUser = function(id) {
-  thisObj = {};
+  let thisObj = {};
   for (let shortURL in urlDatabase) {
     if (id === urlDatabase[shortURL].userID) {
       thisObj[shortURL] = urlDatabase[shortURL];
     }
   }
   return thisObj;
+};
+
+const checkPermissionForURL = function(req,shortURL) {
+  alert = '';
+  let user = getCookie(req);
+
+  if (!user['email']) {
+    alert = "Action Denied! Please login first then try again!";
+  }
+
+  if (user[id] !== urlDatabase[shortURL].userID) {
+    alert = "Action Denied! This record does not belong to you!";
+  }
+
+  return alert;
 }
-
-
 //*******************************************************************
 // routers
 //*******************************************************d************
@@ -128,7 +142,7 @@ app.get("/registration", (req, res) => {
     userId = generateRandomString(12);
   }
 
-  const templateVars = { 
+  const templateVars = {
     userId,
     email,
     password,
@@ -145,10 +159,11 @@ app.post("/registration", (req, res) => {
   const userId = req.body.userId;
   const email = req.body.email;
   const password = req.body.password;
+
   const id = userId;
 
   if (userId && email && password) {
-
+    const hashedPassword = bcrypt.hashSync(password, 10);
     let keys = Object.keys(users);
     for (let key of keys) {
       if (users[key].email === email && users[key].id !== user['id']) {
@@ -161,8 +176,8 @@ app.post("/registration", (req, res) => {
       let thisObj = {
         id,
         email,
-        password 
-      }
+        password : hashedPassword
+      };
 
       if (!user['id']) {                            // new user
         users[userId] = thisObj;
@@ -176,14 +191,16 @@ app.post("/registration", (req, res) => {
 
       if (userId !== user['id']) {
         delete users[user['id']];                 //delete old
-        users[userId] = thisObj;                 //update users
+        users[userId] = thisObj;                  //update users
 
-        res.clearCookie('userId');               //delete old cookie
-        sendCookie(res,'userId', email);   //add new cookie
+        res.clearCookie('userId');                //delete old cookie
+        sendCookie(res,'userId', email);          //add new cookie
       }
     }
+  } else {
+    alert = "Please Enter all required fields";
   }
-
+console.log(users);
   if (alert) {
     res.status(400).send("Email already registered!");
   } else {
@@ -196,21 +213,21 @@ app.get("/urls", (req, res) => {
   let user = getCookie(req);
 
   if (user['email']) {
-    email = user['email']
+    email = user['email'];
   }
 
-  urls = urlsForUser(userId);
+  let urls = urlsForUser(userId);
   if (Object.keys(urls).length === 0) {
-    alert = "You have no URLs!"
+    alert = "You have no URLs!";
     if (!email) {
       alert += " Please login first!";
     }
   }
   
-  const templateVars = { 
+  const templateVars = {
     userId,
     email,
-    alert, 
+    alert,
     urls
   };
   alert = "";
@@ -226,13 +243,13 @@ app.post("/logout", (req, res) => {
 
 app.get("/login", (req, res) => {
   userId = '';
-  email = '';
- // alert = '';
+  let email = '';
+  // alert = '';
 
-  const templateVars = { 
+  const templateVars = {
     userId,
     email,
-    alert, 
+    alert,
   };
   alert = '';
   res.render("login", templateVars);
@@ -244,15 +261,17 @@ app.post("/login", (req, res) => {
 
   let email = req.body.email;
   let password = req.body.password;
+  const hashedPassword = bcrypt.hashSync(password, 10);
+
 
   if (email && password) {
     let keys = Object.keys(users);
     for (let key of keys) {
-      if (users[key].email === email && users[key].password === password) {
+      if (users[key].email === email && bcrypt.compareSync(password, users[key].password)) {
         sendCookie(res,'userId', email);
         user = users[key];
         break;
-      } 
+      }
     }
 
     if (!user.id) {
@@ -285,7 +304,7 @@ app.post("/urls", (req, res) => {
     }
 
     for (let url in urlDatabase) {
-      if (urlDatabase[url] === long_url && url !== short_url){
+      if (urlDatabase[url] === long_url && url !== short_url) {
         alert = "alert3";
         break;
       }
@@ -310,14 +329,14 @@ app.get("/urls/new", (req, res) => {
   let user = getCookie(req);
 
   if (!user['email']) {
-    alert = "Action Denied! Please login first then try again!"
+    alert = "Action Denied! Please login first then try again!";
     res.redirect("/login");
     return;
   }
 
   email = user['email'];
 
-  const templateVars = { 
+  const templateVars = {
     userId,
     email,
     alert
@@ -331,7 +350,7 @@ app.get("/urls/:shortURL", (req, res) => {
   let user = getCookie(req);
 
   if (!user['email']) {
-    alert = "Action Denied! Please login first then try again!"
+    alert = "Action Denied! Please login first then try again!";
     res.redirect("/login");
     return;
   }
@@ -341,7 +360,7 @@ app.get("/urls/:shortURL", (req, res) => {
   const templateVars = {
     userId,
     email,
-    shortURL: req.params.shortURL, 
+    shortURL: req.params.shortURL,
     longURL: urlDatabase[req.params.shortURL],
     alert
   };
@@ -354,7 +373,7 @@ app.post("/urls/:shortURL/delete", (req, res) => {
   let user = getCookie(req);
 
   if (!user['email']) {
-    alert = "Action Denied! Please login first then try again!"
+    alert = "Action Denied! Please login first then try again!";
     res.redirect("/login");
     return;
   }
