@@ -1,6 +1,7 @@
 const express = require("express");
 const bodyParser = require("body-parser");
-const cookieParser = require("cookie-parser");
+//const cookieParser = require("cookie-parser");
+const cookieSession = require("cookie-session");
 const morgan = require('morgan');
 const bcrypt = require('bcryptjs');
 
@@ -56,9 +57,23 @@ const alerts =
 //*******************************************************************
 
 app.use(bodyParser.urlencoded({extended: true}));
-app.use(cookieParser());
-app.use(morgan('combined'));
+//app.use(cookieParser());
+app.use(cookieSession(
+  {name : 'session',
+  keys : ['key1', 'key2'],
+  //maxAge : 5 * 60 *1000    //24 * 60 * 60 * 1000 // 24 hours
+  }));
 
+//app.use(morgan('combined'));
+app.use(morgan('dev'));
+
+// Just to view that this is a middleware
+app.use((req, res, next) => {
+  console.log('You are going through a midleware');
+  console.log(users);
+  console.log(urlDatabase);
+  next();
+})
 
 
 //*******************************************************************
@@ -73,18 +88,20 @@ const generateRandomString = function(num) {
   return str;
 };
 
-const sendCookie = (res, key, val) => {
+const sendCookie = (req, res, key, val) => {
   if (val) {
-    res.cookie(key, val,
-      {
-        maxAge: 5 * 60 * 1000,  //24 * 60 * 60 * 1000,
-        httpOnly: true,
-      });
+    req.session[key] = val;
+    // res.cookie(key, val,
+    //   {
+    //     maxAge: 5 * 60 * 1000,  //24 * 60 * 60 * 1000,
+    //     httpOnly: true,
+    //   });
   }
 };
 
-const getCookie = (req) => {
-  userId = req.cookies['userId'];
+const getCookie = (req, res) => {
+  //userId = req.cookies['userId'];
+  userId = req.session.userId;
 
   if (userId) {
     let keys = Object.keys(users);
@@ -99,12 +116,16 @@ const getCookie = (req) => {
 };
 
 const urlsForUser = function(id) {
+
+  console.log ('================>',id);
   let thisObj = {};
   for (let shortURL in urlDatabase) {
+    console.log("======>",urlDatabase[shortURL].userID);
     if (id === urlDatabase[shortURL].userID) {
       thisObj[shortURL] = urlDatabase[shortURL];
     }
   }
+  console.log(thisObj);
   return thisObj;
 };
 
@@ -132,12 +153,12 @@ app.get("/", (req, res) => {
 app.get("/registration", (req, res) => {
   let email = '';
   let password = '';
-  let user = getCookie(req);
+  let user = getCookie(req,res);
 
   if (user.id) {
     userId = user.id;
     email = user.email;
-    password = user.password;
+    //password = user.password;
   } else {
     userId = generateRandomString(12);
   }
@@ -154,7 +175,7 @@ app.get("/registration", (req, res) => {
 app.post("/registration", (req, res) => {
 
   alert = "";
-  const user = getCookie(req);
+  const user = getCookie(req,res);
 
   const userId = req.body.userId;
   const email = req.body.email;
@@ -181,12 +202,12 @@ app.post("/registration", (req, res) => {
 
       if (!user['id']) {                            // new user
         users[userId] = thisObj;
-        sendCookie(res,'userId', email);   //set userId cookie
+        sendCookie(req, res,'userId', email);   //set userId cookie
       }
 
       if (userId === user['id']) {                  // update details
         users[userId] = thisObj;
-        sendCookie(res,'userId', email);
+        sendCookie(req, res,'userId', email);
       }
 
       if (userId !== user['id']) {
@@ -194,7 +215,7 @@ app.post("/registration", (req, res) => {
         users[userId] = thisObj;                  //update users
 
         res.clearCookie('userId');                //delete old cookie
-        sendCookie(res,'userId', email);          //add new cookie
+        sendCookie(req, res,'userId', email);          //add new cookie
       }
     }
   } else {
@@ -210,13 +231,14 @@ console.log(users);
 
 app.get("/urls", (req, res) => {
   let email = '';
-  let user = getCookie(req);
+  let user = getCookie(req,res);
 
   if (user['email']) {
     email = user['email'];
   }
 
-  let urls = urlsForUser(userId);
+  let urls = urlsForUser(user.id);
+
   if (Object.keys(urls).length === 0) {
     alert = "You have no URLs!";
     if (!email) {
@@ -236,7 +258,8 @@ app.get("/urls", (req, res) => {
 });
 
 app.post("/logout", (req, res) => {
-  res.clearCookie('userId');
+  res.clearCookie('session');
+  res.clearCookie('session.sig');
   userId = '';
   res.redirect("/urls");
 });
@@ -268,7 +291,7 @@ app.post("/login", (req, res) => {
     let keys = Object.keys(users);
     for (let key of keys) {
       if (users[key].email === email && bcrypt.compareSync(password, users[key].password)) {
-        sendCookie(res,'userId', email);
+        sendCookie(req, res,'userId', email);
         user = users[key];
         break;
       }
@@ -288,6 +311,8 @@ app.post("/login", (req, res) => {
 //router used to add or modify urls
 app.post("/urls", (req, res) => {
   alert = "";
+  let user = getCookie(req,res);
+
   let short_url = req.body.shortURL;
   let long_url = req.body.longURL;
 
@@ -313,7 +338,7 @@ app.post("/urls", (req, res) => {
     if (alert === "") {
       let thisObj = {};
       thisObj.longURL = long_url;
-      thisObj.userId = userId;
+      thisObj.userID = user['id'];   //userId;
       urlDatabase[short_url] = thisObj;
     }
   } else {
@@ -323,10 +348,9 @@ app.post("/urls", (req, res) => {
   res.redirect("/urls");
 });
 
-
 app.get("/urls/new", (req, res) => {
   let email = '';
-  let user = getCookie(req);
+  let user = getCookie(req,res);
 
   if (!user['email']) {
     alert = "Action Denied! Please login first then try again!";
@@ -347,7 +371,7 @@ app.get("/urls/new", (req, res) => {
 // Router to edit a record from the database
 app.get("/urls/:shortURL", (req, res) => {
   let email = '';
-  let user = getCookie(req);
+  let user = getCookie(req, res);
 
   if (!user['email']) {
     alert = "Action Denied! Please login first then try again!";
@@ -370,7 +394,7 @@ app.get("/urls/:shortURL", (req, res) => {
 // Router to delete a record from the database
 app.post("/urls/:shortURL/delete", (req, res) => {
 
-  let user = getCookie(req);
+  let user = getCookie(req, res);
 
   if (!user['email']) {
     alert = "Action Denied! Please login first then try again!";
