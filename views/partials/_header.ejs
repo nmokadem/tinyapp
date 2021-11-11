@@ -11,7 +11,7 @@
       </div>
 
       <div class="collapse navbar-collapse form-group mb-2 justify-content-end">
-          <% if (!userId) { %>
+          <% if (!email) { %>
             <form class="form-inline" action="/login" method="GET">
               <!--label for="userId">user name:</label>
               <input class="form-control" type="text" name="userId" value="" placeholder="username" style="width: 300px; margin: 1em"-->
@@ -20,7 +20,7 @@
             </form>
           <% } %>
 
-          <% if (userId) { %>
+          <% if (email) { %>
             <form class="form-inline" action="/logout" method="POST">
               <input class="form-control" type="hidden" name="userId" value="<%= userId %>">
               Logged in as <%= email %>&nbsp;&nbsp;

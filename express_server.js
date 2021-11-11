@@ -1,6 +1,7 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
+const morgan = require('morgan');
 
 const app = express();
 
@@ -13,7 +14,6 @@ const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com"
 };
-
 
 let userId = "";
 const users = 
@@ -30,14 +30,13 @@ const users =
   }
 }
 
-
 let alert = "";
 const alerts =
 {
-  alert1 : "Email or passwrord not found. Please Try Again!",
-  alert2 : "Profile cannot be added. Dubplicate emails",
-  alert3 : "URL entered already exists!",
-  alert4 : "URL cannot be empty!"
+  "alert1" : "Email or passwrord not found. Please Try Again!",
+  "alert2" : "Profile cannot be added. Dubplicate emails",
+  "alert3" : "URL entered already exists!",
+  "alert4" : "URL cannot be empty!"
 }
 
 //*******************************************************************
@@ -46,7 +45,7 @@ const alerts =
 
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(cookieParser());
-
+app.use(morgan('combined'));
 
 
 
@@ -60,33 +59,32 @@ function generateRandomString(num) {
     str += characters[Math.floor(Math.random() * characters.length)];
   }
   return str; 
-}
+};
 
-const sendUserIdCookie = (res,user_Id, userId) => {
-  if (userId) {
-    res.cookie(user_Id, userId,
+const sendCookie = (res, key, val) => {
+  if (val) {
+    res.cookie(key, val,
     {
       maxAge: 5 * 60 * 1000,  //24 * 60 * 60 * 1000, 
       httpOnly: true,
     });
   }
-}
+};
 
-const getUserIdCookie = (req) => {
+const getCookie = (req) => {
   userId = req.cookies['userId'];
 
   if (userId) {
     let keys = Object.keys(users);
     for (let key of keys) {
       if (users[key].id === userId || users[key].email === userId) {
-        //console.log(users[key]);
         return users[key];
       }
     }
     userId = '';
   }
   return {};
-}
+};
 
 
 //*******************************************************************
@@ -99,7 +97,7 @@ app.get("/", (req, res) => {
 app.get("/registration", (req, res) => {
   let email = '';
   let password = '';
-  let user = getUserIdCookie(req);
+  let user = getCookie(req);
 
   if (user.id) {
     userId = user.id;
@@ -119,19 +117,20 @@ app.get("/registration", (req, res) => {
 });
 
 app.post("/registration", (req, res) => {
+
   alert = "";
-  const user = getUserIdCookie(req);
-  const user_id = user['id'];
+  const user = getCookie(req);
 
   const userId = req.body.userId;
   const email = req.body.email;
   const password = req.body.password;
   const id = userId;
+
   if (userId && email && password) {
 
     let keys = Object.keys(users);
     for (let key of keys) {
-      if (users[key].email === email && users[key].id !== user_id) {
+      if (users[key].email === email && users[key].id !== user['id']) {
         alert = "alert2";
         break;
       }
@@ -144,22 +143,22 @@ app.post("/registration", (req, res) => {
         password 
       }
 
-      if (!user_id) {                            // new user
+      if (!user['id']) {                            // new user
         users[userId] = thisObj;
-        sendUserIdCookie(res,'userId', userId);  //set userId cookie
+        sendCookie(res,'userId', email);   //set userId cookie
       }
 
-      if (userId === user_id) {          // update details
+      if (userId === user['id']) {                  // update details
         users[userId] = thisObj;
-        sendUserIdCookie(res,'userId', email);
+        sendCookie(res,'userId', email);
       }
 
-      if (userId !== user_id) {
-        delete users[user_id];           //delete old
-        users[userId] = thisObj;         //update user
+      if (userId !== user['id']) {
+        delete users[user['id']];                 //delete old
+        users[userId] = thisObj;                 //update users
 
-        res.clearCookie('userId');      //delete old cookie
-        sendUserIdCookie(res,'userId', userId);  //add new cookie
+        res.clearCookie('userId');               //delete old cookie
+        sendCookie(res,'userId', email);   //add new cookie
       }
     }
   }
@@ -173,7 +172,7 @@ app.post("/registration", (req, res) => {
 
 app.get("/urls", (req, res) => {
   let email = '';
-  let user = getUserIdCookie(req);
+  let user = getCookie(req);
   if (user['email']) {
     email = user['email']
   }
@@ -185,16 +184,6 @@ app.get("/urls", (req, res) => {
     urls: urlDatabase
   };
   alert = "";
-//  console.log(templateVars);
-
-// console.log('=======================================');
-// console.log('userId =====>',userId);
-// console.log('----------------');
-// console.log('users =====>',users);
-// console.log('=======================================');
-// console.log();
-// console.log();
-
 
   res.render("urls_index", templateVars);
 });
@@ -230,7 +219,7 @@ app.post("/login", (req, res) => {
     let keys = Object.keys(users);
     for (let key of keys) {
       if (users[key].email === email && users[key].password === password) {
-        sendUserIdCookie(res,'userId', email);
+        sendCookie(res,'userId', email);
         user = users[key];
         break;
       } 
@@ -283,7 +272,7 @@ app.post("/urls", (req, res) => {
 
 app.get("/urls/new", (req, res) => {
   let email = '';
-  let user = getUserIdCookie(req);
+  let user = getCookie(req);
   if (user['email']) {
     email = user['email'];
   }
@@ -299,7 +288,7 @@ app.get("/urls/new", (req, res) => {
 // Router to edit a record from the database
 app.get("/urls/:shortURL", (req, res) => {
   let email = '';
-  let user = getUserIdCookie(req);
+  let user = getCookie(req);
   if (user['email']) {
     email = user['email']
   }

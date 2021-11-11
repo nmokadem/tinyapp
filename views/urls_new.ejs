@@ -12,8 +12,15 @@
 
   <body>
     <%- include('partials/_header') %>
+
     <main style="margin: 1em;">
-      <h3>Create TinyURL</h3>
+  <div class="card">
+    <div class="card-header"></div>
+    <div class="card-body">
+      <h2 class="card-title">Create TinyURL</h2>
+    </div>
+      <div class="card-footer text-muted">
+
       <form class="form-inline" action="/urls" method="POST">
         <div class="form-group mb-2 justify-content-center">
           <label for="longURL">Enter a URL:</label>
@@ -22,6 +29,8 @@
           <a href="/urls" class="btn btn-secondary">Cancel</a>
         </div>
       </form>
+      </div>
+      </div>
     </main>
       <!-- Bootstrap JS -->
     <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
