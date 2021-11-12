@@ -12,7 +12,7 @@ const app = express();
 
 let userId = "";
 let alert = "";
-let statistics = {};
+//let statistics = {};
 
 app.set("view engine", "ejs");
 
@@ -37,12 +37,12 @@ app.use(morgan('dev'));
 // Middleware to be used for HTTP DELETE and PUT
 //app.use(methodOverride('X-HTTP-Method-Override'));
 //app.use(methodOverride('_method'));  // this works fine with delete but not put
-app.use(methodOverride(function (req, res) {
+app.use(methodOverride(function(req, res) {
   if (req.body && typeof req.body === 'object' && '_method' in req.body) {
     // look in urlencoded POST bodies and delete it
-    var method = req.body._method
-    delete req.body._method
-    return method
+    let method = req.body._method;
+    delete req.body._method;
+    return method;
   }
 }));
 
@@ -52,13 +52,13 @@ app.use((req, res, next) => {
   //console.log(users);
   //console.log(urlDatabase);
 
-console.log(`Statistics : ${req.method} ${req.originalUrl}`);
+  // console.log(`Statistics : ${req.method} ${req.originalUrl}`);
 
-  if (statistics[req.method][req.originalUrl]) {
-    statistics[req.method][req.originalUrl].count += 1;
-  } else {
-    statistics[req.method][req.originalUrl].count = 1;
-  }
+  // if (statistics[req.method][req.originalUrl]) {
+  //   statistics[req.method][req.originalUrl].count += 1;
+  // } else {
+  //   statistics[req.method][req.originalUrl].count = 1;
+  // }
   next();
 });
 
@@ -94,20 +94,20 @@ const getUserFromCookie = (req, res) => {
   return {};
 };
 
-const checkPermissionForURL = function(req,shortURL) {
-  alert = '';
-  let user = getUserFromCookie(req);
+// const checkPermissionForURL = function(req,shortURL) {
+//   alert = '';
+//   let user = getUserFromCookie(req);
 
-  if (!user['email']) {
-    alert = "Action Denied! Please login first then try again!";
-  }
+//   if (!user['email']) {
+//     alert = "Action Denied! Please login first then try again!";
+//   }
 
-  if (user.id !== urlDatabase[shortURL].userID) {
-    alert = "Action Denied! This record does not belong to you!";
-  }
+//   if (user.id !== urlDatabase[shortURL].userID) {
+//     alert = "Action Denied! This record does not belong to you!";
+//   }
 
-  return alert;
-};
+//   return alert;
+// };
 
 const routeURLHelper = function(req, res) {
 
@@ -299,26 +299,26 @@ app.put("/urls", (req, res) => {
   alert = "";
   let user = getUserFromCookie(req,res);
 
-  let short_url = req.body.shortURL;
-  let long_url = req.body.longURL;
+  let shorturl = req.body.shortURL;
+  let longurl = req.body.longURL;
 
-  if (long_url) {   //URL not empty or else do nothing
+  if (longurl) {   //URL not empty or else do nothing
 
-    if (!short_url) {  //Add a new URL
-      short_url = generateRandomString(6);
+    if (!shorturl) {  //Add a new URL
+      shorturl = generateRandomString(6);
     }
 
-    if (long_url.length > 5) {
-      if (long_url.substring(0,4) !== 'http') {
-        if (long_url.substr(0,3) !== 'www') {
-          long_url = "www." + long_url;
+    if (longurl.length > 5) {
+      if (longurl.substring(0,4) !== 'http') {
+        if (longurl.substr(0,3) !== 'www') {
+          longurl = "www." + longurl;
         }
-        long_url = 'http://' + long_url;
+        longurl = 'http://' + longurl;
       }
     }
 
     for (let url in urlDatabase) {
-      if (urlDatabase[url] === long_url && url !== short_url) {
+      if (urlDatabase[url] === longurl && url !== shorturl) {
         alert = "alert3";
         break;
       }
@@ -326,9 +326,9 @@ app.put("/urls", (req, res) => {
 
     if (alert === "") {
       let thisObj = {};
-      thisObj.longURL = long_url;
+      thisObj.longURL = longurl;
       thisObj.userID = user['id'];   //userId;
-      urlDatabase[short_url] = thisObj;
+      urlDatabase[shorturl] = thisObj;
     }
   } else {
     alert = "alert4";
@@ -355,26 +355,26 @@ app.post("/urls", (req, res) => {
   alert = "";
   let user = getUserFromCookie(req,res);
 
-  let short_url = req.body.shortURL;
-  let long_url = req.body.longURL;
+  let shorturl = req.body.shortURL;
+  let longurl = req.body.longURL;
 
-  if (long_url) {   //URL not empty or else do nothing
+  if (longurl) {   //URL not empty or else do nothing
 
-    if (!short_url) {  //Add a new URL
-      short_url = generateRandomString(6);
+    if (!shorturl) {  //Add a new URL
+      shorturl = generateRandomString(6);
     }
 
-    if (long_url.length > 5) {
-      if (long_url.substring(0,4) !== 'http') {
-        if (long_url.substr(0,3) !== 'www') {
-          long_url = "www." + long_url;
+    if (longurl.length > 5) {
+      if (longurl.substring(0,4) !== 'http') {
+        if (longurl.substr(0,3) !== 'www') {
+          longurl = "www." + longurl;
         }
-        long_url = 'http://' + long_url;
+        longurl = 'http://' + longurl;
       }
     }
 
     for (let url in urlDatabase) {
-      if (urlDatabase[url] === long_url && url !== short_url) {
+      if (urlDatabase[url] === longurl && url !== shorturl) {
         alert = "alert3";
         break;
       }
@@ -382,9 +382,9 @@ app.post("/urls", (req, res) => {
 
     if (alert === "") {
       let thisObj = {};
-      thisObj.longURL = long_url;
+      thisObj.longURL = longurl;
       thisObj.userID = user['id'];   //userId;
-      urlDatabase[short_url] = thisObj;
+      urlDatabase[shorturl] = thisObj;
     }
   } else {
     alert = "alert4";
