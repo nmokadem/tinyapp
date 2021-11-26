@@ -7,7 +7,7 @@ const bcrypt = require('bcryptjs');
 const methodOverride = require('method-override');
 const fs = require('fs');
 
-const { generateRandomString, urlsForUser, getUserByEmail } = require('./helpers');
+const { generateRandomString, urlsForUser } = require('./helpers');
 let { PORT, urlDatabase, users, alerts } = require('./setup');
 const app = express();
 
@@ -23,7 +23,7 @@ let alert = "";
 // functions to read and write from file for users and URLs
 //
 // IIFE to read users rom files
-( () => {
+(() => {
   fs.readFile('users.json', 'utf-8', (err, data) => {
     if (err) {
       throw err;
@@ -33,7 +33,7 @@ let alert = "";
     if (data.length) {               // data is not empty
       users = JSON.parse(data.toString());
     } else {
-      let users =
+      users =
         {
           "userRandomID": {
             "id": "userRandomID",
@@ -47,13 +47,13 @@ let alert = "";
           }
         };
     }
-  })
+  });
 })();
 
 
 //IIFE to read urls from files
-( () => {
-  fs.readFile('urls.json', 'utf-8', (err, data) => { 
+(() => {
+  fs.readFile('urls.json', 'utf-8', (err, data) => {
     if (err) {
       throw err;
     }
@@ -73,7 +73,7 @@ let alert = "";
         }
       };
     }
-  })
+  });
 })();
 
 
@@ -84,7 +84,7 @@ const saveUsers = () => {
     if (err) {
       throw err;
     }
-  })
+  });
 };
 
 
@@ -95,7 +95,7 @@ const saveURLs = () => {
     if (err) {
       throw err;
     }
-  })
+  });
 };
 
 //===========================================================
@@ -133,12 +133,6 @@ app.use(methodOverride(function(req, res) {
 
 // Just to view that this is a middleware
 app.use((req, res, next) => {
-  //console.log('You are going through a midleware');
-  //console.log(users);
-  //console.log(urlDatabase);
-
-  // console.log(`Statistics : ${req.method} ${req.originalUrl}`);
-
   // if (statistics[req.method][req.originalUrl]) {
   //   statistics[req.method][req.originalUrl].count += 1;
   // } else {
@@ -158,7 +152,7 @@ const clearCookies = (res) => {
   res.clearCookie('session');
   res.clearCookie('session.sig');
   userId = '';                          //reset the global userId
-}
+};
 
 //create cookies set by cookie-session
 // there will be two cookies session and session.sig (cookie-session)
@@ -175,7 +169,7 @@ const getUserFromCookie = (req) => {
 
   if (userId) {
     let keys = Object.keys(users);
-    for (let key of keys) {
+    for (const key of keys) {
       if (users[key].id === userId || users[key].email === userId) {
         return users[key];
       }
@@ -218,7 +212,7 @@ const postOrPutUser = (method, req, res) => {
   // All fields are required
   if (id && email && password) {
     let keys = Object.keys(users);
-    for (let key of keys) {
+    for (const key of keys) {
       if ((method === 'post' && users[key].email === email) ||
           (method === 'put' && users[key].email === email && users[key].id !== id)) {
         alert = alerts["alert2"];
@@ -234,7 +228,7 @@ const postOrPutUser = (method, req, res) => {
       };
 
       //POST or PUT profile (no change of id so no need to delete first in case of an update)
-      users[id] = thisObj;                        
+      users[id] = thisObj;
       saveUsers();                                // Save to file
       sendCookie(req, res, 'userId', email);      //set new cookie
     }
@@ -262,6 +256,7 @@ const postOrPutURL = (method,req, res) => {
 
     if (!shorturl) {  //Add a new URL
       shorturl = generateRandomString(6);
+      res.redirect("/urls/" + shorturl);
     }
 
     if (longurl.length > 5) {  //? what if it is shorter
@@ -273,10 +268,19 @@ const postOrPutURL = (method,req, res) => {
       }
     }
 
-    for (let url in urlDatabase) {
+    //Check if owner of the URL is the same as the current user
+    // Permisson denied in case they are not the same. Cannot edit record
+    const urlUserID = urlDatabase[shorturl].userID;                // Owner of the URL
+    if (method === "put" && user['id'] !== urlUserID) {
+      alert = alerts["alertB"];
+      res.redirect("/urls/" + shorturl);
+      return;
+    }
+
+    for (const url in urlDatabase) {
       if ((method === "put" && urlDatabase[url].longURL === longurl && url !== shorturl) ||
          (method === "post" && urlDatabase[url].longURL === longurl)) {
-        alert = alerts["alert3"];
+        alert = alerts["alert3"];    //URL entered already exists
         break;
       }
     }
@@ -297,7 +301,7 @@ const postOrPutURL = (method,req, res) => {
       res.redirect("/urls/new");
     }
     if (method === "put") {
-      res.redirect("/urls/"+shorturl);
+      res.redirect("/urls/" + shorturl);
     }
     return;
   }
@@ -343,7 +347,7 @@ app.post("/login", (req, res) => {
 
   if (email && password) {
     let keys = Object.keys(users);
-    for (let key of keys) {
+    for (const key of keys) {
       if (users[key].email === email && bcrypt.compareSync(password, users[key].password)) {
         sendCookie(req, res, 'userId', email);
         user = users[key];
@@ -365,7 +369,7 @@ app.post("/login", (req, res) => {
 });
 
 
-//Router used to log out 
+//Router used to log out
 app.post("/logout", (req, res) => {
   clearCookies(res);
   res.redirect("/urls");
@@ -482,8 +486,14 @@ app.get("/urls/:shortURL", (req, res) => {
     return;
   }
 
-  obj.shortURL = req.params.shortURL,
-  obj.longURL  = urlDatabase[req.params.shortURL].longURL,
+  if (req.params.shortURL && urlDatabase[req.params.shortURL].longURL) {
+    obj.shortURL = req.params.shortURL;
+    obj.longURL  = urlDatabase[req.params.shortURL].longURL;
+  } else {
+    alert =  alerts['alertA'];     //record not found
+    res.redirect("/urls");
+    return;
+  }
 
   alert = "";
   res.render("urls_show", obj);
