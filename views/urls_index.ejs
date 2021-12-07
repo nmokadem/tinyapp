@@ -34,7 +34,11 @@
             <tr>        
               <td><%= url %></td>
               <td><a class="navbar-brand" href="<%= urls[url].longURL %>"  target="_blank" ><%= urls[url].longURL %></a></td>
-              <td><form method="GET" action="/urls/<%= url %>"><button type="submit" class="btn btn-outline-primary">Edit</button></form></td>
+              <td>
+                <form method="GET" action="/urls/<%= url %>">
+                   <button type="submit" class="btn btn-outline-primary">Edit</button>
+                </form>
+              </td>
               <td>
                 <form method="POST" action="/urls/<%= url %>" enctype="application/x-www-form-urlencoded">
                   <input type="hidden" name="_method" value="DELETE">

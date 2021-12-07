@@ -1,1 +1,22 @@
-{"userRandomID":{"id":"userRandomID","email":"user@example.com","password":"purple-monkey-dinosaur"},"user2RandomID":{"id":"user2RandomID","email":"user2@example.com","password":"dishwasher-funk"},"n3RqP0z7gmky":{"id":"n3RqP0z7gmky","email":"email@server.ca","password":"$2a$10$upDrdsjsVl4rBy40SIXXnOiYIxoGIHsWkGpUYeZw8Vvro7j5LcqHy"}}
+{
+  "userRandomID": {
+    "id": "userRandomID",
+    "email": "user@example.com",
+    "password": "$2a$10$0FwtIJ3rDFPUlnF0kSuuOu998x0i1f4ATyn.OjaM8SXIrrx31QJ3q"
+  },
+  "user2RandomID": {
+    "id": "user2RandomID",
+    "email": "user2@example.com",
+    "password": "$2a$10$BWlNfGP3UyQYzwWfAivcO.OyqRoZjdF7oqCH3nDUqP59i6Dc3XV96"
+  },
+  "n3RqP0z7gmky": {
+    "id": "n3RqP0z7gmky",
+    "email": "email@server.ca",
+    "password": "$2a$10$caLGz7LbXFIeGYucFU/neeMwhY9f2FG3nyQDIHNytJOT.aMVXz3OO"
+  },
+  "4whbRVr5c1Fi": {
+    "id": "4whbRVr5c1Fi",
+    "email": "me@server.com",
+    "password": "$2a$10$RkuOJQvCEeNdgaamQlbnZeibV3gNuusXH7eSe.yjOdLqje9erjExi"
+  }
+}

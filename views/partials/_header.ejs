@@ -16,7 +16,7 @@
             <!--label for="userId">user name:</label>
             <input class="form-control" type="text" name="userId" value="" placeholder="username" style="width: 300px; margin: 1em"-->
             <button type="submit" class="btn btn-info">Login</button>&nbsp;
-            <a class="nav-item nav-link btn btn-secondary" href="/registration">Register</a>
+            <a class="nav-item nav-link btn btn-secondary" href="/register">Register</a>
           </form>
         <% } %>
 
@@ -25,7 +25,7 @@
             <input class="form-control" type="hidden" name="userId" value="<%= userId %>">
             Logged in as <%= email %>&nbsp;&nbsp;
             <button type="submit" class="btn btn-outline-dark">Log Out</button>
-            <a class="nav-item nav-link btn btn-secondary" href="/registration">Profile</a>
+            <a class="nav-item nav-link btn btn-secondary" href="/register">Profile</a>
           </form>
         <% } %>
       </div>
